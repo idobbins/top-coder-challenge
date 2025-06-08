@@ -1,22 +1,65 @@
-# Reimbursement Calculation Functions
-# Separated from command-line script for use in evaluation
+# Conservative Enhanced Reimbursement Functions
+# Focus on proven improvements without over-engineering
 
-# Load optimized configuration
-source("optimized_config.R")
-
-# Smart optimized parameters with configurable thresholds
+# Get the original optimized config with conservative enhancements
 get_config <- function() {
-  return(get_optimized_config())
+  return(list(
+    # Basic calculation parameters (from your original optimized version)
+    base_per_diem = 59,
+    mileage_rates = c(0.6, 0.6, 0.4),
+    receipt_rates = c(0.5, 0.55, 0.6, 0.1),
+    
+    # Tier boundaries (optimized)
+    mileage_tiers = c(80, 450),
+    receipt_tiers = c(40, 450, 1400),
+    
+    # Threshold values (optimized)
+    receipt_threshold = 660.54,
+    efficiency_threshold = 187.01,
+    miles_threshold = 400,
+    
+    # Feature engineering thresholds
+    efficiency_zones = c(100, 180, 220, 300),
+    spending_categories = c(75, 120),
+    sweet_spot_duration = c(4, 6),
+    
+    # Cluster definition parameters
+    cluster_boundaries = list(
+      very_short_high_eff = c(1.5, 500),
+      long_low_eff = c(8, 50),
+      medium_high_spend = c(3, 5, 1500),
+      medium_high_eff = c(4, 7, 150, 800),
+      long_high_spend = c(8, 1200)
+    ),
+    
+    # Multipliers and adjustments
+    cluster_multipliers = c(1.01277, 0.96982, 1.01280, 1.01430, 1.00000, 1.01208),
+    vacation_bonus_multiplier = 1.00000,
+    vacation_base_multiplier = 1.00000,
+    five_day_multiplier = 1.10000,
+    receipt_threshold_multiplier = 1.00000,
+    efficiency_threshold_multiplier = 1.00000,
+    miles_threshold_multiplier = 0.95000,
+    
+    # CONSERVATIVE ENHANCEMENTS: Small, targeted improvements
+    interaction_coeff = 0.002,   # Optimized
+    log_bonus_coeff = 8,         # Optimized
+    bug_base_bonus = 5.0,        # Optimized
+    bug_multiplier = 0.002,      # Optimized
+    
+    # Enhanced rounding bug parameters (conservative)
+    bug_cents_values = c(49, 99, 1, 51)  # Keep original priority
+  ))
 }
 
-# Feature engineering function
+# Conservative feature engineering - keep most of original, add only proven features
 engineer_features <- function(trip_duration_days, miles_traveled, total_receipts_amount) {
-  # Basic rate features
+  # Basic rate features (original)
   receipts_per_day <- total_receipts_amount / trip_duration_days
   receipts_per_mile <- ifelse(miles_traveled > 0, total_receipts_amount / miles_traveled, 0)
   miles_per_day <- miles_traveled / trip_duration_days
   
-  # Efficiency-based features
+  # Efficiency-based features (original)
   efficiency_category <- ifelse(miles_per_day < 100, 0,
                                ifelse(miles_per_day < 180, 1,
                                      ifelse(miles_per_day <= 220, 2,
@@ -25,7 +68,7 @@ engineer_features <- function(trip_duration_days, miles_traveled, total_receipts
   efficiency_bonus_zone <- ifelse(miles_per_day >= 180 & miles_per_day <= 220, 1, 0)
   efficiency_penalty_zone <- ifelse(miles_per_day > 300, 1, 0)
   
-  # Spending pattern features
+  # Spending pattern features (original)
   spending_category <- ifelse(receipts_per_day < 75, 0,
                              ifelse(receipts_per_day <= 120, 1, 2))
   
@@ -33,37 +76,37 @@ engineer_features <- function(trip_duration_days, miles_traveled, total_receipts
   optimal_receipt_range <- ifelse(total_receipts_amount >= 600 & total_receipts_amount <= 800, 1, 0)
   high_spending_flag <- ifelse(total_receipts_amount > 1000, 1, 0)
   
-  # CRITICAL: The rounding bug (enhanced)
+  # ENHANCED: Expanded rounding bug detection (conservative)
   receipt_cents <- (total_receipts_amount * 100) %% 100
-  receipt_ends_49_99 <- ifelse(receipt_cents %in% c(49, 99), 1, 0)
-  receipt_ends_special <- ifelse(receipt_cents %in% c(1, 51), 1, 0)
+  receipt_ends_49_99 <- ifelse(receipt_cents %in% c(49, 99), 1, 0)  # Original
+  receipt_ends_special <- ifelse(receipt_cents %in% c(1, 51), 1, 0)  # New but conservative
   
-  # Trip length features
+  # Trip length features (original)
   is_5_day_trip <- ifelse(trip_duration_days == 5, 1, 0)
   is_sweet_spot_duration <- ifelse(trip_duration_days >= 4 & trip_duration_days <= 6, 1, 0)
   duration_penalty_zone <- ifelse(trip_duration_days < 2 | trip_duration_days > 10, 1, 0)
   very_short_trip <- ifelse(trip_duration_days == 1, 1, 0)
   very_long_trip <- ifelse(trip_duration_days >= 8, 1, 0)
   
-  # Combination features
+  # Combination features (original)
   sweet_spot_combo <- ifelse(trip_duration_days == 5 & miles_per_day >= 180 & receipts_per_day < 100, 1, 0)
   vacation_penalty <- ifelse(trip_duration_days >= 8 & receipts_per_day > 120, 1, 0)
   high_mile_low_spend <- ifelse(miles_per_day > 200 & receipts_per_day < 80, 1, 0)
   low_mile_high_spend <- ifelse(miles_per_day < 100 & receipts_per_day > 100, 1, 0)
   
-  # Interaction features
+  # Interaction features (original)
   efficiency_spending_interaction <- miles_per_day * receipts_per_day
   duration_efficiency_interaction <- trip_duration_days * miles_per_day
   duration_spending_interaction <- trip_duration_days * receipts_per_day
   
-  # Threshold features
+  # Threshold features (original)
   short_high_efficiency <- ifelse(trip_duration_days <= 3 & miles_per_day > 150, 1, 0)
   long_low_efficiency <- ifelse(trip_duration_days >= 7 & miles_per_day < 100, 1, 0)
   medium_balanced <- ifelse(trip_duration_days >= 4 & trip_duration_days <= 6 & 
                            miles_per_day >= 100 & miles_per_day <= 200 & 
                            receipts_per_day >= 50 & receipts_per_day <= 150, 1, 0)
   
-  # Mathematical transformations
+  # Mathematical transformations (original)
   log_trip_duration <- log(trip_duration_days + 1)
   log_miles_traveled <- log(miles_traveled + 1)
   log_receipts <- log(total_receipts_amount + 1)
@@ -73,7 +116,7 @@ engineer_features <- function(trip_duration_days, miles_traveled, total_receipts
   receipts_squared <- total_receipts_amount^2
   trip_duration_cubed <- trip_duration_days^3
   
-  # Ratio and efficiency features
+  # Ratio and efficiency features (original)
   total_efficiency <- (miles_traveled * trip_duration_days) / (total_receipts_amount + 1)
   cost_per_mile <- ifelse(miles_traveled > 0, total_receipts_amount / miles_traveled, 0)
   productivity_score <- miles_traveled / (trip_duration_days * (total_receipts_amount + 1))
@@ -120,7 +163,7 @@ engineer_features <- function(trip_duration_days, miles_traveled, total_receipts
   ))
 }
 
-# Cluster determination function
+# Cluster determination function (unchanged)
 determine_cluster <- function(features) {
   trip_duration <- features$trip_duration_days
   miles_traveled <- features$miles_traveled
@@ -143,7 +186,7 @@ determine_cluster <- function(features) {
   }
 }
 
-# Main reimbursement calculation function
+# Conservative enhanced main calculation function
 calculate_reimbursement <- function(trip_duration_days, miles_traveled, total_receipts_amount, config = NULL) {
   if (is.null(config)) {
     config <- get_config()
@@ -155,10 +198,10 @@ calculate_reimbursement <- function(trip_duration_days, miles_traveled, total_re
   # Determine cluster
   cluster <- determine_cluster(features)
   
-  # Calculate base reimbursement
+  # Calculate base reimbursement (original logic)
   base_per_diem_amount <- config$base_per_diem * trip_duration_days
   
-  # Mileage calculation with configurable tiers
+  # Mileage calculation with configurable tiers (original)
   tier1 <- config$mileage_tiers[1]
   tier2 <- config$mileage_tiers[2]
   
@@ -170,7 +213,7 @@ calculate_reimbursement <- function(trip_duration_days, miles_traveled, total_re
     mileage_reimbursement <- tier1 * config$mileage_rates[1] + (tier2 - tier1) * config$mileage_rates[2] + (miles_traveled - tier2) * config$mileage_rates[3]
   }
   
-  # Receipt reimbursement with configurable tiers
+  # Receipt reimbursement with configurable tiers (original)
   rtier1 <- config$receipt_tiers[1]
   rtier2 <- config$receipt_tiers[2]
   rtier3 <- config$receipt_tiers[3]
@@ -187,7 +230,7 @@ calculate_reimbursement <- function(trip_duration_days, miles_traveled, total_re
   
   base_amount <- base_per_diem_amount + mileage_reimbursement + receipt_reimbursement
   
-  # Apply cluster adjustments with optimized multipliers
+  # Apply cluster adjustments (original)
   if (cluster == 4 && features$vacation_penalty == 1) {
     adjusted_amount <- base_amount * config$vacation_bonus_multiplier
   } else if (cluster == 4) {
@@ -196,7 +239,7 @@ calculate_reimbursement <- function(trip_duration_days, miles_traveled, total_re
     adjusted_amount <- base_amount * config$cluster_multipliers[cluster + 1]
   }
   
-  # Apply threshold effects with optimized multipliers
+  # Apply threshold effects (original)
   threshold_adjusted <- adjusted_amount
   
   if (features$is_5_day_trip == 1) {
@@ -215,7 +258,7 @@ calculate_reimbursement <- function(trip_duration_days, miles_traveled, total_re
     threshold_adjusted <- threshold_adjusted * config$miles_threshold_multiplier
   }
   
-  # Apply rounding bug with optimized parameters (enhanced)
+  # CONSERVATIVE ENHANCEMENT: Apply rounding bug with small bonuses
   if (features$receipt_ends_49_99 == 1) {
     bug_bonus <- config$bug_base_bonus + (threshold_adjusted * config$bug_multiplier)
     final_amount <- threshold_adjusted + bug_bonus
@@ -227,7 +270,7 @@ calculate_reimbursement <- function(trip_duration_days, miles_traveled, total_re
     final_amount <- threshold_adjusted
   }
   
-  # Apply interaction effects with optimized coefficients
+  # CONSERVATIVE ENHANCEMENT: Apply small interaction effects
   interaction_bonus <- features$duration_spending_interaction * config$interaction_coeff
   log_bonus <- features$log_receipts * config$log_bonus_coeff
   
