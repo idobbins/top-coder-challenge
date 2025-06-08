@@ -4,6 +4,6 @@
 # This script replicates a 60-year-old travel reimbursement system
 # Usage: ./run.sh <trip_duration_days> <miles_traveled> <total_receipts_amount>
 
-# Implementation: Optimized Python-based reverse-engineered legacy system
-# Incorporates all discovered bugs, quirks, and calculation paths
-python3 calculate_reimbursement_optimized.py "$1" "$2" "$3"
+# Implementation: Optimized R-based reverse-engineered legacy system
+# Uses DEoptim-optimized parameters for maximum accuracy
+Rscript calculate_reimbursement.R "$1" "$2" "$3"
