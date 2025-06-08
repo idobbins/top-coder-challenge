@@ -5,18 +5,18 @@
 get_config <- function() {
   return(list(
     # Basic calculation parameters
-    base_per_diem = 67,
+    base_per_diem = 59,
     mileage_rates = c(0.6, 0.6, 0.4),
     receipt_rates = c(0.5, 0.55, 0.6, 0.1),
     
     # Tier boundaries (optimized)
-    mileage_tiers = c(120, 600),  # Optimized: First 120 miles, next 480 miles, then remainder
-    receipt_tiers = c(50, 500, 1500),  # First $50, next $450, next $1000, then remainder
+    mileage_tiers = c(80, 450),  # Optimized: First 80 miles, next 370 miles, then remainder
+    receipt_tiers = c(40, 450, 1400),  # First $40, next $410, next $950, then remainder
     
     # Threshold values (optimized)
     receipt_threshold = 660.54,
     efficiency_threshold = 187.01,
-    miles_threshold = 450,  # Optimized from 473.8
+    miles_threshold = 400,  # Optimized from 450
     
     # Feature engineering thresholds
     efficiency_zones = c(100, 180, 220, 300),  # miles per day boundaries
